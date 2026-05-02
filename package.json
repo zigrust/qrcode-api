@@ -1,0 +1,9 @@
+{
+  "name": "qrcode-api",
+  "version": "1.0.0",
+  "description": "QR Code generation API for Vercel — fast, simple, production-ready",
+  "license": "MIT",
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}
