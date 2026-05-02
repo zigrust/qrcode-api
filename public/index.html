@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code API — Generate QR Codes Instantly</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .container { max-width: 780px; margin: 0 auto; padding: 3rem 1.5rem; }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.4rem;
+    }
+    .subtitle { color: #888; font-size: 1.1rem; margin-bottom: 2.5rem; }
+
+    /* Demo */
+    .demo {
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 14px;
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .demo h2 { font-size: 1.3rem; margin-bottom: 1.2rem; color: #f0f0f0; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+
+    label { display: block; font-size: 0.8rem; color: #999; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    input, select {
+      width: 100%;
+      padding: 0.65rem 0.8rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #f0f0f0;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { outline: none; border-color: #6366f1; }
+    select { cursor: pointer; }
+
+    .url-input-row { margin-bottom: 1rem; }
+    .url-input-row input { width: 100%; }
+
+    .preview-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 1.2rem;
+    }
+    #qrimg {
+      display: none;
+      max-width: 260px;
+      border-radius: 10px;
+      border: 1px solid #262626;
+    }
+    #qrimg.show { display: block; }
+    .api-url {
+      margin-top: 0.8rem;
+      font-size: 0.8rem;
+      color: #777;
+      word-break: break-all;
+      text-align: center;
+    }
+
+    /* Pricing */
+    .pricing {
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 14px;
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .pricing h2 { font-size: 1.3rem; margin-bottom: 1rem; color: #f0f0f0; }
+    .pricing p { color: #aaa; margin-bottom: 0.7rem; font-size: 0.95rem; }
+    .wallet {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #a855f7;
+      word-break: break-all;
+      user-select: all;
+      margin: 1rem 0;
+    }
+    .badge {
+      display: inline-block;
+      background: #1a1a1a;
+      color: #6366f1;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    /* API docs summary */
+    .docs {
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 14px;
+      padding: 2rem;
+    }
+    .docs h2 { font-size: 1.3rem; margin-bottom: 1rem; color: #f0f0f0; }
+    .docs table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .docs th, .docs td {
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid #1f1f1f;
+    }
+    .docs th { color: #999; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    .docs td { color: #ccc; }
+    .docs td code {
+      background: #1a1a1a;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #a78bfa;
+    }
+
+    a { color: #818cf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: #555;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Code API</h1>
+    <p class="subtitle">Generate QR codes on the fly — single endpoint, zero friction.</p>
+
+    <!-- ── Live Demo ── -->
+    <section class="demo">
+      <h2>🔮 Live Demo</h2>
+      <div class="form-row">
+        <div>
+          <label>Size (px)</label>
+          <input type="number" id="size" value="300" min="50" max="4000" />
+        </div>
+        <div>
+          <label>Foreground</label>
+          <input type="text" id="color" value="000000" maxlength="6" placeholder="000000" />
+        </div>
+        <div>
+          <label>Background</label>
+          <input type="text" id="bg" value="ffffff" maxlength="6" placeholder="ffffff" />
+        </div>
+      </div>
+      <div class="url-input-row">
+        <label>Text / URL</label>
+        <input type="text" id="text" value="https://example.com" placeholder="Enter text or URL..." />
+      </div>
+      <div class="preview-area">
+        <img id="qrimg" alt="Generated QR Code" />
+        <div class="api-url" id="apiurl"></div>
+      </div>
+    </section>
+
+    <!-- ── Pricing ── -->
+    <section class="pricing">
+      <h2>💰 Pricing &amp; API Keys</h2>
+      <p>
+        The public endpoint is <strong>rate-limited</strong>. For production usage, purchase an API key
+        via crypto payment — one-time payment, unlimited requests forever.
+      </p>
+      <p>
+        <span class="badge">One-time</span>&nbsp;
+        <strong>50 USDT</strong> (Polygon network) → unlimited API key
+      </p>
+      <p style="margin-top:0.5rem; font-size:0.85rem;">
+        Send payment to the wallet below, then email your <strong>transaction hash</strong> to
+        <a href="mailto:api@qrcode.xyz">api@qrcode.xyz</a>. We'll reply with your API key within 24 hours.
+      </p>
+      <div class="wallet" id="wallet">0xa817391A3D3530E034294A66232481bd77978775</div>
+      <button
+        style="background:#6366f1;color:#fff;border:none;padding:0.5rem 1rem;border-radius:8px;font-size:0.85rem;cursor:pointer;margin-top:0.3rem;"
+        onclick="navigator.clipboard.writeText(document.getElementById('wallet').textContent).then(()=>{this.textContent='Copied!'})"
+      >Copy Wallet Address</button>
+    </section>
+
+    <!-- ── API Reference ── -->
+    <section class="docs">
+      <h2>📖 API Reference</h2>
+      <p style="color:#888;margin-bottom:1rem;">Base URL: <code>GET /api/qrcode</code></p>
+      <table>
+        <thead>
+          <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>string</td><td>—</td><td><strong>Required.</strong> Text or URL to encode</td></tr>
+          <tr><td><code>size</code></td><td>number</td><td>300</td><td>Image size in pixels (50–4000)</td></tr>
+          <tr><td><code>color</code></td><td>hex</td><td>000000</td><td>Foreground color (6 hex digits, no #)</td></tr>
+          <tr><td><code>bg</code></td><td>hex</td><td>ffffff</td><td>Background color (6 hex digits, no #)</td></tr>
+          <tr><td><code>ec</code></td><td>string</td><td>M</td><td>Error correction: L, M, Q, or H</td></tr>
+          <tr><td><code>margin</code></td><td>number</td><td>4</td><td>Quiet zone margin (0–10)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      Built for speed &middot; Deployed on Vercel &middot;
+      <a href="https://github.com/nousresearch/hermes-agent">Hermes Agent</a>
+    </footer>
+  </div>
+
+  <script>
+    const img = document.getElementById("qrimg");
+    const apiUrlEl = document.getElementById("apiurl");
+    const inputs = ["text", "size", "color", "bg"];
+
+    function updateQR() {
+      const text = document.getElementById("text").value.trim();
+      if (!text) {
+        img.classList.remove("show");
+        apiUrlEl.textContent = "";
+        return;
+      }
+      const size = document.getElementById("size").value || "300";
+      const color = document.getElementById("color").value || "000000";
+      const bg = document.getElementById("bg").value || "ffffff";
+      const url = `/api/qrcode?text=${encodeURIComponent(text)}&size=${size}&color=${color}&bg=${bg}`;
+
+      img.src = url;
+      img.classList.add("show");
+      apiUrlEl.textContent = url;
+    }
+
+    // Debounced live preview
+    let timer;
+    inputs.forEach((id) => {
+      document.getElementById(id).addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(updateQR, 300);
+      });
+    });
+    updateQR();
+  </script>
+</body>
+</html>
